@@ -10,13 +10,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 app = Flask(__name__)
-app.secret_key = "chave_secreta_muito_segura"
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "chave_secreta_muito_segura")  # Usa variável de ambiente no Vercel
 
 # Configuração para upload de logotipos
-UPLOAD_FOLDER = 'static/uploads'
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # exist_ok evita erros se já existir
 
 # Função para verificar se o usuário é admin
 def is_admin():
@@ -560,5 +560,9 @@ def exportar_financeiro_pdf():
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="relatorio_financeiro.pdf")
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# Exportar a aplicação para o Vercel como WSGI
+application = app
+
+# Remover app.run() para produção no Vercel
+# if __name__ == "__main__":
+#     app.run(debug=True)
