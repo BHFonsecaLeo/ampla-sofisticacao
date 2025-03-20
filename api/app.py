@@ -1,5 +1,6 @@
 import sys
 import os
+import logging
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models import Usuario, Empresa, Cliente, Compra, Venda, Estoque, Orcamento, Financeiro
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
@@ -11,55 +12,64 @@ from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# Criar a aplicação Flask com o diretório templates explicitamente definido
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__, template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates')))
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "chave_secreta_muito_segura")
+logger.info("Aplicação Flask iniciada")
 
 # Configuração para upload de logotipos
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'static', 'uploads')
+UPLOAD_FOLDER = '/tmp/uploads' if os.getenv('VERCEL') else os.path.join(os.path.dirname(__file__), '..', 'static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-if not os.path.exists(UPLOAD_FOLDER):
+if not os.getenv('VERCEL'):  # Criar diretório apenas localmente, não no Vercel
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Função para verificar se o usuário é admin
 def is_admin():
     if "usuario" not in session:
         return False
     usuario = Usuario.buscar_por_username(session["usuario"])
     return usuario and usuario["role"] == "admin"
 
-# Registrar a função is_admin no ambiente Jinja2
 app.jinja_env.globals['is_admin'] = is_admin
 
 @app.route("/")
 @app.route("/dashboard")
 def dashboard():
+    logger.info("Acessando a rota /dashboard")
     if "usuario" not in session:
+        logger.info("Usuário não logado, redirecionando para login")
         return redirect(url_for("login"))
-    clientes = Cliente.total_clientes()
-    compras = Compra.total_compras()
-    vendas = Venda.total_vendas()
-    estoque = Estoque.total_itens()
-    orcamentos = Orcamento.total_pendente()
-    saldo = Financeiro.calcular_saldo()
-    vendas_semanal = Venda.buscar_por_semana()
-    compras_semanal = Compra.buscar_por_semana()
-    entradas_semanal, saidas_semanal = Financeiro.buscar_fluxo_semanal()
-    estoque_baixo = Estoque.verificar_estoque_baixo()
-    return render_template(
-        "dashboard.html",
-        clientes=clientes,
-        compras=compras,
-        vendas=vendas,
-        estoque=estoque,
-        orcamentos=orcamentos,
-        saldo=saldo,
-        vendas_semanal=vendas_semanal,
-        compras_semanal=compras_semanal,
-        entradas_semanal=entradas_semanal,
-        saidas_semanal=saidas_semanal,
-        estoque_baixo=estoque_baixo
-    )
+    try:
+        clientes = Cliente.total_clientes()
+        compras = Compra.total_compras()
+        vendas = Venda.total_vendas()
+        estoque = Estoque.total_itens()
+        orcamentos = Orcamento.total_pendente()
+        saldo = Financeiro.calcular_saldo()
+        vendas_semanal = Venda.buscar_por_semana()
+        compras_semanal = Compra.buscar_por_semana()
+        entradas_semanal, saidas_semanal = Financeiro.buscar_fluxo_semanal()
+        estoque_baixo = Estoque.verificar_estoque_baixo()
+        logger.info("Dados do dashboard carregados com sucesso")
+        return render_template(
+            "dashboard.html",
+            clientes=clientes,
+            compras=compras,
+            vendas=vendas,
+            estoque=estoque,
+            orcamentos=orcamentos,
+            saldo=saldo,
+            vendas_semanal=vendas_semanal,
+            compras_semanal=compras_semanal,
+            entradas_semanal=entradas_semanal,
+            saidas_semanal=saidas_semanal,
+            estoque_baixo=estoque_baixo
+        )
+    except Exception as e:
+        logger.error(f"Erro no dashboard: {str(e)}")
+        raise
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -553,5 +563,4 @@ def exportar_financeiro_pdf():
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="relatorio_financeiro.pdf")
 
-# Exportar a aplicação para o Vercel como WSGI
 application = app
