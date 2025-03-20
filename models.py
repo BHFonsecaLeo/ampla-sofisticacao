@@ -1,11 +1,14 @@
 import sqlite3
+import os
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class Database:
     @staticmethod
     def get_connection():
-        return sqlite3.connect("ampla_sofisticacao.db")
+        # Caminho relativo ao raiz a partir de api/
+        db_path = os.path.join(os.path.dirname(__file__), "..", "ampla_sofisticacao.db")
+        return sqlite3.connect(db_path)
 
 class Usuario:
     @staticmethod
