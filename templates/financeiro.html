@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mt-5">
+    <h1 class="display-5 fw-bold text-primary">Financeiro</h1>
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm p-3">
+                <h3 class="fw-bold">Saldo Atual: R$ {{ saldo | round(2) }}</h3>
+            </div>
+        </div>
+        <div class="col-12 mt-4">
+            <div class="card shadow-sm p-3">
+                <h3 class="fw-bold">Transações</h3>
+                <a href="{{ url_for('exportar_financeiro_pdf') }}" class="btn btn-primary mb-3">Exportar PDF</a>
+                <ul class="list-group">
+                    {% for transacao in transacoes %}
+                    <li class="list-group-item">
+                        Tipo: {{ transacao.tipo }} - Valor: R$ {{ transacao.valor | round(2) }} - Data: {{ transacao.data }} - Descrição: {{ transacao.descricao }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

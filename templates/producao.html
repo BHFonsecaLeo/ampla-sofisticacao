@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mt-5">
+    <h1 class="display-5 fw-bold text-primary">Produção</h1>
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm p-3">
+                <h3 class="fw-bold">Iniciar Produção</h3>
+                <form method="POST" class="row g-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" name="produto" placeholder="Produto" required>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="date" class="form-control" name="data_prevista" required>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Iniciar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-12 mt-4">
+            <div class="card shadow-sm p-3">
+                <h3 class="fw-bold">Lista de Produções</h3>
+                <ul class="list-group">
+                    {% for producao in producoes %}
+                    <li class="list-group-item {% if producao.status == 'Em Andamento' and producao.data_prevista < 'now' | strftime('%Y-%m-%d') %}list-group-item-warning{% endif %} d-flex justify-content-between align-items-center">
+                        {{ producao.produto }} - Status: {{ producao.status }} - Início: {{ producao.data_inicio }} - Previsão: {{ producao.data_prevista }}
+                        <div>
+                            {% if producao.status == "Em Andamento" %}
+                            <button class="btn btn-sm btn-warning me-2" data-bs-toggle="modal" data-bs-target="#editModal{{ producao.id }}">Editar</button>
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="producao_id" value="{{ producao.id }}">
+                                <button type="submit" name="concluir" class="btn btn-sm btn-success me-2">Concluir</button>
+                            </form>
+                            {% endif %}
+                            {% if is_admin %}
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="producao_id" value="{{ producao.id }}">
+                                <button type="submit" name="delete" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </li>
+                    <!-- Modal de Edição -->
+                    <div class="modal fade" id="editModal{{ producao.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ producao.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editModalLabel{{ producao.id }}">Editar Produção</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form method="POST">
+                                    <div class="modal-body">
+                                        <input type="hidden" name="producao_id" value="{{ producao.id }}">
+                                        <div class="mb-3">
+                                            <label class="form-label">Produto</label>
+                                            <input type="text" class="form-control" name="produto" value="{{ producao.produto }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Data Prevista</label>
+                                            <input type="date" class="form-control" name="data_prevista" value="{{ producao.data_prevista }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" name="edit" class="btn btn-primary">Salvar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
