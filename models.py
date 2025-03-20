@@ -3,8 +3,8 @@ import os
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 
-# Caminho absoluto para o banco de dados no diretório raiz
-DB_PATH = os.path.join(os.path.dirname(__file__), 'ampla_sofisticacao.db')
+# Usar /tmp no Vercel, caso contrário, o caminho local
+DB_PATH = '/tmp/ampla_sofisticacao.db' if os.getenv('VERCEL') else os.path.join(os.path.dirname(__file__), 'ampla_sofisticacao.db')
 
 # Função auxiliar para conectar ao banco
 def get_db_connection():
@@ -565,3 +565,4 @@ class Financeiro:
 
 # Inicializar o banco ao importar o módulo
 init_db()
+
