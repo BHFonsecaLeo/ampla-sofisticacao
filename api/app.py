@@ -1,5 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models import Usuario, Empresa, Cliente, Compra, Venda, Estoque, Orcamento, Financeiro
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -7,7 +10,6 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "chave_secreta_muito_segura")  # Usa variável de ambiente no Vercel
@@ -563,6 +565,6 @@ def exportar_financeiro_pdf():
 # Exportar a aplicação para o Vercel como WSGI
 application = app
 
-# Remover app.run() para produção no Vercel
+# Para teste local (remover antes de enviar ao Vercel)
 # if __name__ == "__main__":
 #     app.run(debug=True)
