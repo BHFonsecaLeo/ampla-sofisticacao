@@ -23,7 +23,7 @@ logger.info("Aplicação Flask iniciada")
 # Configuração para upload de logotipos
 UPLOAD_FOLDER = '/tmp/uploads' if os.getenv('VERCEL') else os.path.join(os.path.dirname(__file__), '..', 'static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-if not os.getenv('VERCEL'):  # Criar diretório apenas localmente, não no Vercel
+if not os.getenv('VERCEL'):  # Criar diretório apenas localmente, não no Vercel ao iniciar
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def is_admin():
@@ -119,6 +119,7 @@ def empresas():
                 if 'logotipo' in request.files and request.files['logotipo'].filename != '':
                     file = request.files['logotipo']
                     logotipo = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+                    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
                     file.save(logotipo)
                 Empresa.editar(
                     request.form["empresa_id"],
@@ -149,6 +150,7 @@ def empresas():
                 if 'logotipo' in request.files and request.files['logotipo'].filename != '':
                     file = request.files['logotipo']
                     logotipo = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+                    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
                     file.save(logotipo)
                 Empresa.adicionar(
                     request.form["nome"],
