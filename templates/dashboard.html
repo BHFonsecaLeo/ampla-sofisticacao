@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mt-5">
+    <h1 class="display-5 fw-bold text-primary">Início - Ampla Sofisticação</h1>
+    <!-- Notificações -->
+    {% if estoque_baixo %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>Notificações:</strong>
+        <ul>
+            {% for item in estoque_baixo %}
+            <li>Estoque baixo: {{ item.item }} (Quantidade: {{ item.quantidade }} / Limite: {{ item.limite_minimo }})</li>
+            {% endfor %}
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    <!-- Cards -->
+    <div class="row mt-4 g-4">
+        <div class="col-md-4 col-sm-6">
+            <div class="card text-white bg-primary rounded-3 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Clientes</h5>
+                    <p class="card-text display-6">{{ clientes | default(0) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card text-white bg-info rounded-3 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Compras</h5>
+                    <p class="card-text display-6">{{ compras | default(0) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card text-white bg-success rounded-3 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Vendas</h5>
+                    <p class="card-text display-6">{{ vendas | default(0) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card text-white bg-warning rounded-3 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Estoque (Itens)</h5>
+                    <p class="card-text display-6">{{ estoque | default(0) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card text-white bg-danger rounded-3 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Orçamentos Pendentes</h5>
+                    <p class="card-text display-6">{{ orcamentos | default(0) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card text-white bg-secondary rounded-3 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Saldo Financeiro</h5>
+                    <p class="card-text display-6">R$ {{ saldo | default(0) | float | round(2) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Gráficos -->
+    <div class="row mt-5">
+        <div class="col-12 col-md-4">
+            <h3 class="fw-bold">Vendas Semanais</h3>
+            <div class="card p-3 shadow-sm">
+                {% if not vendas_semanal %}
+                    <p class="text-center text-muted">Nenhum dado disponível.</p>
+                {% else %}
+                    <canvas id="graficoVendas" height="200"></canvas>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <h3 class="fw-bold">Compras Semanais</h3>
+            <div class="card p-3 shadow-sm">
+                {% if not compras_semanal %}
+                    <p class="text-center text-muted">Nenhum dado disponível.</p>
+                {% else %}
+                    <canvas id="graficoCompras" height="200"></canvas>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <h3 class="fw-bold">Fluxo de Caixa Semanal</h3>
+            <div class="card p-3 shadow-sm">
+                {% if not entradas_semanal and not saidas_semanal %}
+                    <p class="text-center text-muted">Nenhum dado disponível.</p>
+                {% else %}
+                    <canvas id="graficoFluxo" height="200"></canvas>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Gráfico de Vendas Semanais
+    const ctxVendas = document.getElementById('graficoVendas')?.getContext('2d');
+    if (ctxVendas) {
+        const vendasSemanal = {{ vendas_semanal | tojson | default('{}') | safe }};
+        const labels = Object.keys(vendasSemanal).sort();
+        const vendas = labels.map(dia => vendasSemanal[dia] || 0);
+
+        new Chart(ctxVendas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Vendas',
+                    data: vendas,
+                    backgroundColor: '#28a745',
+                    borderColor: '#28a745',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Data' } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Quantidade' } }
+                }
+            }
+        });
+    }
+
+    // Gráfico de Compras Semanais
+    const ctxCompras = document.getElementById('graficoCompras')?.getContext('2d');
+    if (ctxCompras) {
+        const comprasSemanal = {{ compras_semanal | tojson | default('{}') | safe }};
+        const labelsCompras = Object.keys(comprasSemanal).sort();
+        const compras = labelsCompras.map(dia => comprasSemanal[dia] || 0);
+
+        new Chart(ctxCompras, {
+            type: 'bar',
+            data: {
+                labels: labelsCompras,
+                datasets: [{
+                    label: 'Compras',
+                    data: compras,
+                    backgroundColor: '#007bff',
+                    borderColor: '#007bff',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Data' } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Quantidade' } }
+                }
+            }
+        });
+    }
+
+    // Gráfico de Fluxo de Caixa Semanal
+    const ctxFluxo = document.getElementById('graficoFluxo')?.getContext('2d');
+    if (ctxFluxo) {
+        const entradasSemanal = {{ entradas_semanal | tojson | default('{}') | safe }};
+        const saidasSemanal = {{ saidas_semanal | tojson | default('{}') | safe }};
+        const labelsFluxo = Object.keys(entradasSemanal).sort();
+        const entradas = labelsFluxo.map(dia => entradasSemanal[dia] || 0);
+        const saidas = labelsFluxo.map(dia => saidasSemanal[dia] || 0);
+
+        new Chart(ctxFluxo, {
+            type: 'bar',
+            data: {
+                labels: labelsFluxo,
+                datasets: [
+                    {
+                        label: 'Entradas',
+                        data: entradas,
+                        backgroundColor: '#28a745',
+                        borderColor: '#28a745',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Saídas',
+                        data: saidas,
+                        backgroundColor: '#dc3545',
+                        borderColor: '#dc3545',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Data' } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Valor (R$)' } }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
